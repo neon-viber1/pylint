@@ -1,0 +1,5 @@
+``disallowed-name`` is now also emitted for names that skip the ``invalid-name`` check
+because of control flow in the name checker, such as overriding methods, inherited or
+``Final`` instance attributes, and names with uninferable values.
+
+Closes issue 10679

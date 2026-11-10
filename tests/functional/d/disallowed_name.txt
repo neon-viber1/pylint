@@ -1,4 +1,10 @@
-disallowed-name:3:0:3:7:baz:"Disallowed name ""baz""":HIGH
-disallowed-name:6:0:6:9:foo:"Disallowed name ""foo""":HIGH
-disallowed-name:10:0:10:3::"Disallowed name ""foo""":HIGH
-invalid-name:11:0:11:3::"Constant name ""aaa"" doesn't conform to UPPER_CASE naming style":HIGH
+disallowed-name:5:0:5:7:baz:"Disallowed name ""baz""":HIGH
+disallowed-name:8:0:8:9:foo:"Disallowed name ""foo""":HIGH
+disallowed-name:11:0:11:3::"Disallowed name ""foo""":HIGH
+disallowed-name:12:0:12:3::"Disallowed name ""foo""":HIGH
+invalid-name:13:0:13:3::"Constant name ""aaa"" doesn't conform to UPPER_CASE naming style":HIGH
+disallowed-name:17:4:17:12:Base.toto:"Disallowed name ""toto""":HIGH
+disallowed-name:21:8:21:17:Base.fine:"Disallowed name ""tutu""":HIGH
+disallowed-name:25:4:25:12:Child.toto:"Disallowed name ""toto""":HIGH
+disallowed-name:29:8:29:17:Child.fine:"Disallowed name ""tutu""":HIGH
+disallowed-name:38:8:38:17:FinalHolder.__init__:"Disallowed name ""tata""":HIGH

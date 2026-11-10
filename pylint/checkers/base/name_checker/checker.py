@@ -325,6 +325,7 @@ class NameChecker(_BasicChecker):
     def __init__(self, linter: PyLinter) -> None:
         super().__init__(linter)
         self._name_group: dict[str, str] = {}
+        self._name_checked = False
         self._bad_names: dict[str, dict[str, list[_BadNamesTuple]]] = {}
         self._name_regexps: dict[str, re.Pattern[str]] = {}
         self._name_hints: dict[str, str] = {}
@@ -415,6 +416,8 @@ class NameChecker(_BasicChecker):
                 node.instance_attr_ancestors(attr)
             ) and not utils.is_assign_name_annotated_with(anodes[0], "Final"):
                 self._check_name("attr", attr, anodes[0])
+            else:
+                self._check_disallowed_name("attr", attr, anodes[0])
 
     @utils.only_required_for_messages("disallowed-name", "invalid-name")
     def visit_functiondef(self, node: nodes.FunctionDef) -> None:
@@ -423,6 +426,12 @@ class NameChecker(_BasicChecker):
         confidence = interfaces.HIGH
         if node.is_method():
             if utils.overrides_a_method(node.parent.frame(), node.name):
+                # Only the disallowed-name check applies to overriding methods.
+                self._check_disallowed_name(
+                    _determine_function_name_type(node, config=self.linter.config),
+                    node.name,
+                    node,
+                )
                 return
             confidence = (
                 interfaces.INFERENCE
@@ -450,7 +459,16 @@ class NameChecker(_BasicChecker):
         "typevar-double-variance",
         "typevar-name-mismatch",
     )
-    def visit_assignname(  # pylint: disable=too-many-branches,too-many-statements
+    def visit_assignname(self, node: nodes.AssignName) -> None:
+        """Check assigned names, and always check for disallowed names."""
+        self._name_checked = False
+        self._check_assignname(node)
+        if not self._name_checked:
+            # Control flow skipped _check_name(); invalid-name is intentionally
+            # not emitted, but disallowed-name must still be.
+            self._check_disallowed_name("variable", node.name, node)
+
+    def _check_assignname(  # pylint: disable=too-many-branches,too-many-statements
         self, node: nodes.AssignName
     ) -> None:
         """Check module level assigned names."""
@@ -709,6 +727,20 @@ class NameChecker(_BasicChecker):
             pattern.match(name) for pattern in self._bad_names_rgxs_compiled
         )
 
+    def _check_disallowed_name(
+        self, node_type: str, name: str, node: nodes.NodeNG
+    ) -> bool:
+        """Emit disallowed-name if needed; return True if the name was reported."""
+        if self._name_allowed_by_regex(name=name):
+            return False
+        if self._name_disallowed_by_regex(name=name):
+            self.linter.stats.increase_bad_name(node_type, 1)
+            self.add_message(
+                "disallowed-name", node=node, args=name, confidence=interfaces.HIGH
+            )
+            return True
+        return False
+
     def _check_name(
         self,
         node_type: str,
@@ -718,6 +750,7 @@ class NameChecker(_BasicChecker):
         disallowed_check_only: bool = False,
     ) -> None:
         """Check for a name using the type's regexp."""
+        self._name_checked = True
 
         def _should_exempt_from_invalid_name(node: nodes.NodeNG) -> bool:
             if node_type == "variable":
@@ -728,11 +761,7 @@ class NameChecker(_BasicChecker):
 
         if self._name_allowed_by_regex(name=name):
             return
-        if self._name_disallowed_by_regex(name=name):
-            self.linter.stats.increase_bad_name(node_type, 1)
-            self.add_message(
-                "disallowed-name", node=node, args=name, confidence=interfaces.HIGH
-            )
+        if self._check_disallowed_name(node_type, name, node):
             return
         regexp = self._name_regexps[node_type]
         match = regexp.match(name)

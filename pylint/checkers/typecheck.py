@@ -113,6 +113,30 @@ class VERSION_COMPATIBLE_OVERLOAD:
 VERSION_COMPATIBLE_OVERLOAD_SENTINEL = VERSION_COMPATIBLE_OVERLOAD()
 
 
+def _is_unpacked_from_partly_uninferable_value(expr: nodes.NodeNG) -> bool:
+    """Whether a name was bound by unpacking a value with an uninferable result.
+
+    When a call has several inference results and one of them is uninferable,
+    astroid drops that result while unpacking the call into several names, so
+    the names only keep the results of the other alternatives.
+    """
+    if not isinstance(expr, nodes.Name):
+        return False
+    for target in expr.lookup(expr.name)[1]:
+        if not (
+            isinstance(target, nodes.AssignName)
+            and isinstance(target.parent, (nodes.Tuple, nodes.List))
+            and isinstance(target.parent.parent, nodes.Assign)
+        ):
+            continue
+        if any(
+            isinstance(value, util.UninferableBase)
+            for value in utils.infer_all(target.parent.parent.value)
+        ):
+            return True
+    return False
+
+
 def _is_owner_ignored(
     owner: SuccessfulInferenceResult,
     attrname: str | None,
@@ -1170,6 +1194,9 @@ accessed. Python regular expressions are accepted.",
         if self._postponed_evaluation_enabled and is_node_in_type_annotation_context(
             node
         ):
+            return
+
+        if _is_unpacked_from_partly_uninferable_value(node.expr):
             return
 
         try:
@@ -2373,6 +2400,9 @@ accessed. Python regular expressions are accepted.",
             return
 
         if is_inside_abstract_class(node):
+            return
+
+        if _is_unpacked_from_partly_uninferable_value(node.value):
             return
 
         inferred = safe_infer(node.value)

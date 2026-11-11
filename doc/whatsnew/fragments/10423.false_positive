@@ -1,0 +1,4 @@
+Fix false positives for ``unsubscriptable-object`` and ``no-member`` on names bound by
+unpacking a call that has several inference results, one of which is uninferable.
+
+Closes #10423

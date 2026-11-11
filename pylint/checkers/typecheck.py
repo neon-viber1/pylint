@@ -1603,6 +1603,12 @@ accessed. Python regular expressions are accepted.",
             # those errors are handled by different warnings.
             return
 
+        if called.qname() == "builtins.object.__new__":
+            # For C-implemented parent classes (e.g. datetime.datetime), astroid
+            # falls back to the signature of object.__new__ when resolving
+            # ``super().__new__``. The real signature is unknown, so don't check it.
+            return
+
         if called.args.args is None:
             if called.name == "isinstance":
                 # Verify whether second argument of isinstance is a valid type

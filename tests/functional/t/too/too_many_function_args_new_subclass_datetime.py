@@ -1,6 +1,6 @@
 """Subclassing datetime.datetime and forwarding to ``super().__new__``."""
 
-# pylint: disable=missing-docstring,unused-argument,too-many-positional-arguments
+# pylint: disable=missing-docstring,unused-argument,too-many-positional-arguments,too-many-arguments
 import datetime
 from typing import Self
 

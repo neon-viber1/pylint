@@ -1,5 +1,5 @@
 """Subscripting a value with several inferred results (issue 10423)."""
-# pylint: disable=missing-function-docstring,too-few-public-methods,invalid-name,expression-not-assigned
+# pylint: disable=missing-function-docstring,too-few-public-methods,invalid-name,expression-not-assigned,pointless-statement
 from unknown_module import subplots  # pylint: disable=import-error
 
 
@@ -37,8 +37,15 @@ int_or_uninferable(True)[0]
 # Every result is concrete and unsupported: still reported.
 only_unsupported(True)[0]  # [unsubscriptable-object]
 
-# Known limitation: tuple unpacking of a call result loses the uninferable
-# alternative inside astroid, so only the first return type is considered.
+# Unpacking a call with an uninferable alternative: no message either.
 fig, axes = uninferable_second((4, 7), 3)
-axes[0].plot()  # [unsubscriptable-object]
-fig.tight_layout()  # [no-member]
+axes[0].plot()
+fig.tight_layout()
+
+# Unpacking that is not a plain assignment, and unpacking a known value.
+for first, second in [(1, 2)]:
+    first.real
+    second.real
+pair_a, pair_b = (1, [2])
+pair_b[0]
+pair_a.real

@@ -1,5 +1,4 @@
-Add regression tests for ``unsubscriptable-object`` and ``no-member`` on functions with
-several return types. A remaining false positive, caused by astroid dropping the
-uninferable alternative when unpacking a call result, is documented in the tests.
+Fix false positives for ``unsubscriptable-object`` and ``no-member`` on names bound by
+unpacking a call that has several inference results, one of which is uninferable.
 
 Closes #10423
